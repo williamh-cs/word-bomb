@@ -1,7 +1,12 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { gameBackgrounds } from '../data/gameBackgrounds'
+import guestPlayer from '../assets/guest_player.png'
+import { heroes } from '../data/heroes'
+import BoardCharacter from '../components/BoardCharacter'
 
 export default function GameBoardPage({ playerCount = 2 }) {
+  const { state } = useLocation()
+  const room = state?.room
   const count = [2, 3, 4].includes(playerCount) ? playerCount : 2
 
   return (
@@ -20,13 +25,27 @@ export default function GameBoardPage({ playerCount = 2 }) {
       >
         <div className="board-preview-label">BOARD PREVIEW / {count} PLAYERS</div>
         <div className="board-player-slots" aria-label="Player slots">
-          {Array.from({ length: count }, (_, index) => (
+          {Array.from({ length: count }, (_, index) => {
+            const name = room?.playerNames?.[index] ?? `Player ${index + 1}`
+            const characterId = room?.playerCharacters?.[index]
+            const isGuest = characterId === 'guest-player'
+              || /^Guest\b/i.test(name)
+              || !characterId
+            const hero = heroes.find((entry) => entry.id === characterId)
+              ?? heroes[0]
+            const isOccupied = !room || Boolean(room.playerNames?.[index])
+            const image = isGuest ? guestPlayer : hero.image
+            const characterName = isGuest ? 'Guest player' : hero.title
+
+            return (
             <div className="board-player-slot" key={index}>
-              <span className="board-player-number" aria-hidden="true">P{index + 1}</span>
-              <span>Player {index + 1}</span>
-              <span className="board-player-status">Waiting for hero</span>
+              {isOccupied && (
+                <BoardCharacter image={image} label={`${name}'s character: ${characterName}`} />
+              )}
+              <span className="board-player-name">{isOccupied ? name : 'Waiting for player'}</span>
             </div>
-          ))}
+            )
+          })}
         </div>
         <div className="board-word-panel">
           <p className="eyebrow">Starting word</p>

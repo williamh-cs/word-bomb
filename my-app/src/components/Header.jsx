@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Header() {
@@ -33,14 +33,27 @@ export default function Header() {
 
   return (
     <header className="top-bar">
-      <button
+      <Link className="top-bar-brand" to="/" aria-label="Word Bomb home">
+        <span>WORD BOMB</span>
+      </Link>
+      {user ? <button
         type="button"
         className="top-bar-username"
-        aria-label={user ? `Signed in as ${username}. Sign out` : 'Guest. Go to log in'}
+        aria-label={`Signed in as ${username}. Sign out`}
         onClick={handleUsernameClick}
       >
         {username}
-      </button>
+      </button> : null}
+      {!user && (
+        <nav className="top-bar-auth" aria-label="Account">
+          <Link className="button button-login" to="/login">
+            Log In
+          </Link>
+          <Link className="button button-sign-in" to="/signup">
+            Sign Up
+          </Link>
+        </nav>
+      )}
     </header>
   )
 }

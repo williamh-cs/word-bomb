@@ -8,31 +8,26 @@ export default function HomePage() {
   return (
     <main className="home-content">
       <section className="home-hero" aria-labelledby="home-heading">
-        <button
-          className="how-to-play-symbol"
-          type="button"
-          aria-label="How to play"
-          aria-expanded={showInstructions}
-          aria-haspopup="dialog"
-          aria-controls="how-to-play"
-          onClick={() => {
-            instructionsRef.current.showModal()
-            setShowInstructions(true)
-          }}
-        >
-          <span aria-hidden="true">?</span>
-        </button>
-
         <div className="home-hero-copy">
           <p className="eyebrow">Think fast</p>
           <h1 id="home-heading">WORD BOMB</h1>
           <div className="home-hero-actions">
-            <Link className="button button-play" to="/multiplayer">
-              Play
+            <Link className="button button-play" to="/multiplayer" state={{ playAsGuest: true }}>
+              Play as Guest
             </Link>
-            <Link className="button button-login" to="/login">
-              Login
-            </Link>
+            <button
+              className="button button-how-to-play"
+              type="button"
+              aria-expanded={showInstructions}
+              aria-haspopup="dialog"
+              aria-controls="how-to-play"
+              onClick={() => {
+                instructionsRef.current.showModal()
+                setShowInstructions(true)
+              }}
+            >
+              How to Play
+            </button>
           </div>
         </div>
 
@@ -66,6 +61,7 @@ export default function HomePage() {
             <li>The game generates a starting word.</li>
             <li>Form a new word that starts with the last letters of the previous word.</li>
             <li>Submit your word before the time limit runs out.</li>
+            <li>You only have 3 lives, so make every turn count!</li>
             <li>Keep the chain going: each new word becomes the starting point for the next turn!</li>
           </ol>
         </dialog>

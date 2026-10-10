@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useId, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function createRoomCode() {
@@ -14,6 +14,7 @@ function createRoomCode() {
 export default function MultiplayerPage() {
   const { user } = useAuth()
   const { state } = useLocation()
+  const navigate = useNavigate()
   const [guestNumber] = useState(() => Math.floor(1000 + Math.random() * 9000))
   const [rooms, setRooms] = useState([])
   const [currentRoomCode, setCurrentRoomCode] = useState(null)
@@ -31,14 +32,27 @@ export default function MultiplayerPage() {
   const passwordDialogRef = useRef(null)
   const hostHeadingId = useId()
   const passwordHeadingId = useId()
-  const displayName = user?.username ?? `Guest ${guestNumber}`
+  const isGuest = state?.playAsGuest === true || !user
+  const displayName = isGuest ? `Guest ${guestNumber}` : user.username
+  const character = isGuest ? 'guest-player' : 'male-knight'
 
-  useEffect(() => {
-    if (visibility === 'public') {
-      setHostPassword('')
-      setHostError('')
-    }
-  }, [visibility])
+  function openWaitingRoom(room, isHost) {
+    navigate('/waitingroom', {
+      state: {
+        isHost,
+        room: {
+          code: room.code,
+          name: room.name,
+          capacity: room.capacity,
+          isPrivate: room.isPrivate,
+          hostName: room.hostName,
+          playerNames: room.playerNames,
+          playerCharacters: room.playerCharacters,
+          status: room.status,
+        },
+      },
+    })
+  }
 
   function openHostDialog() {
     setCapacity(2)
@@ -72,14 +86,21 @@ export default function MultiplayerPage() {
   }
 
   function enterRoom(room, roomList = rooms) {
+    if (room.players >= room.capacity) return
     const updatedRooms = withPlayerLeft(roomList, currentRoomCode).map((entry) =>
       entry.code === room.code
-        ? { ...entry, players: Math.min(entry.capacity, entry.players + 1) }
+        ? {
+            ...entry,
+            players: entry.players + 1,
+            playerNames: [...(entry.playerNames ?? [entry.hostName]), displayName],
+            playerCharacters: [...(entry.playerCharacters ?? [null]), character],
+          }
         : entry,
     )
 
     setRooms(updatedRooms)
     setCurrentRoomCode(room.code)
+    openWaitingRoom(updatedRooms.find((entry) => entry.code === room.code), false)
   }
 
   function handleCreateRoom(event) {
@@ -98,11 +119,15 @@ export default function MultiplayerPage() {
       isPrivate: visibility === 'private',
       password: visibility === 'private' ? hostPassword.trim() : '',
       hostName: displayName,
+      playerNames: [displayName],
+      playerCharacters: [character],
+      status: 'Waiting for players',
     }
 
     setRooms([room, ...withPlayerLeft(rooms, currentRoomCode)])
     setCurrentRoomCode(room.code)
     closeHostDialog()
+    openWaitingRoom(room, true)
   }
 
   function handleRoomClick(room) {
@@ -238,7 +263,11 @@ export default function MultiplayerPage() {
                 name="visibility"
                 value="public"
                 checked={visibility === 'public'}
-                onChange={() => setVisibility('public')}
+                onChange={() => {
+                  setVisibility('public')
+                  setHostPassword('')
+                  setHostError('')
+                }}
               />
               Public
             </label>

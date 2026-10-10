@@ -26,10 +26,19 @@ export default function AuthPage({ mode }) {
         body: JSON.stringify({ username, password }),
       })
 
-      const data = await response.json().catch(() => ({}))
+      const data = await response.json().catch(() => null)
 
       if (!response.ok) {
-        setError(data.error || 'Something went wrong.')
+        setError(data?.error || (
+          response.status >= 500
+            ? 'The sign-in service is unavailable. Please try again once the server is running.'
+            : `Could not sign in (HTTP ${response.status}). Please try again.`
+        ))
+        return
+      }
+
+      if (!data?.user?.id || typeof data.user.username !== 'string') {
+        setError('The sign-in service returned an invalid response. Please try again.')
         return
       }
 
@@ -99,7 +108,7 @@ export default function AuthPage({ mode }) {
 
         <p className="auth-switch">
           {isSignIn ? 'Already have an account?' : 'New to Word Bomb?'}{' '}
-          <Link to={isSignIn ? '/login' : '/signin'}>
+          <Link to={isSignIn ? '/login' : '/signup'}>
             {isSignIn ? 'Log in' : 'Sign up'}
           </Link>
         </p>

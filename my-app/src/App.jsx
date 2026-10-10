@@ -10,6 +10,7 @@ import MultiplayerPage from './pages/MultiplayerPage'
 import NotFoundPage from './pages/NotFoundPage'
 import SignInPage from './pages/SignInPage'
 import ThreePlayerBoardPage from './pages/ThreePlayerBoardPage'
+import WaitingRoomPage from './pages/WaitingRoomPage'
 import './App.css'
 
 export default function App() {
@@ -19,12 +20,14 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
           <Route path="multiplayer" element={<MultiplayerPage />} />
+          <Route path="waitingroom" element={<WaitingRoomPage />} />
           <Route path="guest" element={<Navigate to="/multiplayer" replace />} />
           <Route path="heroes" element={<HeroSelectPage />} />
           <Route path="game-board" element={<GameBoardPage />} />
           <Route path="game-board/3-players" element={<ThreePlayerBoardPage />} />
           <Route path="game-board/4-players" element={<FourPlayerBoardPage />} />
-          <Route path="signin" element={<SignInPage />} />
+          <Route path="signup" element={<SignInPage />} />
+          <Route path="signin" element={<Navigate to="/signup" replace />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
