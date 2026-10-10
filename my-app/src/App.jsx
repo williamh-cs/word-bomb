@@ -1,7 +1,7 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
 import HomePage from './pages/HomePage'
-import GuestPage from './pages/GuestPage'
+import MultiplayerPage from './pages/MultiplayerPage'
 import HeroSelectPage from './pages/HeroSelectPage'
 import GameBoardPage from './pages/GameBoardPage'
 import ThreePlayerBoardPage from './pages/ThreePlayerBoardPage'
@@ -16,7 +16,8 @@ export default function App() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="guest" element={<GuestPage />} />
+        <Route path="multiplayer" element={<MultiplayerPage />} />
+        <Route path="guest" element={<Navigate to="/multiplayer" replace />} />
         <Route path="heroes" element={<HeroSelectPage />} />
         <Route path="game-board" element={<GameBoardPage />} />
         <Route path="game-board/3-players" element={<ThreePlayerBoardPage />} />

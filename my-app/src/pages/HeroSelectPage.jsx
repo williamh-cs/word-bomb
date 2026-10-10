@@ -49,7 +49,7 @@ export default function HeroSelectPage() {
           </button>
         </div>
       )}
-      <Link className="button button-how-to-play hero-back" to="/guest">Back to game options</Link>
+      <Link className="button button-how-to-play hero-back" to="/multiplayer">Back to game options</Link>
     </main>
   )
 }

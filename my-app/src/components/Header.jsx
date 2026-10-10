@@ -8,7 +8,7 @@ export default function Header() {
       </Link>
 
       <nav className="top-bar-actions" aria-label="Account">
-        <Link className="button button-guest" to="/guest">
+        <Link className="button button-guest" to="/multiplayer" state={{ playAsGuest: true }}>
           Play as guest
         </Link>
         <Link className="button button-sign-in" to="/signin">

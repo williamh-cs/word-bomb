@@ -12,7 +12,7 @@ export default function HomePage() {
           <p className="eyebrow">Think fast</p>
           <h1 id="home-heading">WORD BOMB</h1>
           <div className="home-hero-actions">
-            <Link className="button button-play" to="/guest">
+            <Link className="button button-play" to="/multiplayer" state={{ playAsGuest: true }}>
               Play as guest
             </Link>
             <button
