@@ -52,7 +52,7 @@ export default function AuthPage({ mode }) {
         <p className="eyebrow">
           {isSignIn ? 'Begin your adventure' : 'Welcome back, adventurer'}
         </p>
-        <h1 id="auth-heading">{isSignIn ? 'Sign in' : 'Log in'}</h1>
+        <h1 id="auth-heading">{isSignIn ? 'Sign up' : 'Log in'}</h1>
         <p className="auth-description">
           {isSignIn
             ? 'Create an account to save your progress and play with friends.'
@@ -100,7 +100,7 @@ export default function AuthPage({ mode }) {
         <p className="auth-switch">
           {isSignIn ? 'Already have an account?' : 'New to Word Bomb?'}{' '}
           <Link to={isSignIn ? '/login' : '/signin'}>
-            {isSignIn ? 'Log in' : 'Sign in'}
+            {isSignIn ? 'Log in' : 'Sign up'}
           </Link>
         </p>
       </section>

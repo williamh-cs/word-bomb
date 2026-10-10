@@ -17,10 +17,26 @@
 
 .top-bar-username {
   margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
   color: var(--text-h);
+  font: inherit;
   font-size: 18px;
   font-weight: 750;
   letter-spacing: -0.3px;
+  cursor: pointer;
+}
+
+.top-bar-username:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.top-bar-username:focus-visible {
+  outline: 3px solid var(--accent-border);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .button {
