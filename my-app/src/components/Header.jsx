@@ -36,14 +36,21 @@ export default function Header() {
       <Link className="top-bar-brand" to="/" aria-label="Word Bomb home">
         <span>WORD BOMB</span>
       </Link>
-      {user ? <button
-        type="button"
-        className="top-bar-username"
-        aria-label={`Signed in as ${username}. Sign out`}
-        onClick={handleUsernameClick}
-      >
-        {username}
-      </button> : null}
+      {user && (
+        <nav className="top-bar-auth" aria-label="Account">
+          <Link className="button button-sign-in" to="/heroes">
+            Select Hero
+          </Link>
+          <button
+            type="button"
+            className="top-bar-username"
+            aria-label={`Signed in as ${username}. Sign out`}
+            onClick={handleUsernameClick}
+          >
+            {username}
+          </button>
+        </nav>
+      )}
       {!user && (
         <nav className="top-bar-auth" aria-label="Account">
           <Link className="button button-login" to="/login">

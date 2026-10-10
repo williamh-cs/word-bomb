@@ -29,7 +29,6 @@ export default function GameBoardPage({ playerCount = 2 }) {
             const name = room?.playerNames?.[index] ?? `Player ${index + 1}`
             const characterId = room?.playerCharacters?.[index]
             const isGuest = characterId === 'guest-player'
-              || /^Guest\b/i.test(name)
               || !characterId
             const hero = heroes.find((entry) => entry.id === characterId)
               ?? heroes[0]

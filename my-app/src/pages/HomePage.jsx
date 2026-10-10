@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function HomePage() {
+  const { user } = useAuth()
   const [showInstructions, setShowInstructions] = useState(false)
   const instructionsRef = useRef(null)
 
@@ -12,8 +14,8 @@ export default function HomePage() {
           <p className="eyebrow">Think fast</p>
           <h1 id="home-heading">WORD BOMB</h1>
           <div className="home-hero-actions">
-            <Link className="button button-play" to="/multiplayer" state={{ playAsGuest: true }}>
-              Play as Guest
+            <Link className="button button-play" to="/multiplayer" state={{ playAsGuest: !user }}>
+              {user ? 'Play' : 'Play as Guest'}
             </Link>
             <button
               className="button button-how-to-play"

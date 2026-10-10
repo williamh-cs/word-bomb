@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import useSelectedHero from '../hooks/useSelectedHero'
 
 function createRoomCode() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -13,6 +14,7 @@ function createRoomCode() {
 
 export default function MultiplayerPage() {
   const { user } = useAuth()
+  const { heroId } = useSelectedHero()
   const { state } = useLocation()
   const navigate = useNavigate()
   const [guestNumber] = useState(() => Math.floor(1000 + Math.random() * 9000))
@@ -34,12 +36,12 @@ export default function MultiplayerPage() {
   const passwordHeadingId = useId()
   const isGuest = state?.playAsGuest === true || !user
   const displayName = isGuest ? `Guest ${guestNumber}` : user.username
-  const character = isGuest ? 'guest-player' : 'male-knight'
+  const character = isGuest ? 'guest-player' : heroId
 
   function openWaitingRoom(room, isHost) {
-    navigate('/waitingroom', {
-      state: {
+    const waitingState = {
         isHost,
+        currentPlayerIndex: isHost ? 0 : room.playerNames.length - 1,
         room: {
           code: room.code,
           name: room.name,
@@ -50,8 +52,12 @@ export default function MultiplayerPage() {
           playerCharacters: room.playerCharacters,
           status: room.status,
         },
-      },
-    })
+    }
+    if (!isGuest && !heroId) {
+      navigate('/heroes', { state: { pendingWaitingRoom: waitingState } })
+      return
+    }
+    navigate('/waitingroom', { state: waitingState })
   }
 
   function openHostDialog() {

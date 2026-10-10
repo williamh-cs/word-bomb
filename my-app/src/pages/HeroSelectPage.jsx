@@ -1,10 +1,39 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { heroes } from '../data/heroes'
+import { useAuth } from '../context/AuthContext'
+import useSelectedHero from '../hooks/useSelectedHero'
 
 export default function HeroSelectPage() {
-  const [selectedHero, setSelectedHero] = useState(null)
+  const { user, loading } = useAuth()
+  const { heroId, saveHero } = useSelectedHero()
+  const [chosenId, setChosenId] = useState(null)
+  const [error, setError] = useState('')
+  const selectedHero = heroes.find((hero) => hero.id === (chosenId ?? heroId))
   const { state } = useLocation()
+  const navigate = useNavigate()
+
+  if (loading) return <main className="guest-content"><p role="status">Loading your account…</p></main>
+  if (!user) return <Navigate to="/multiplayer" replace />
+
+  function confirmHero() {
+    if (!selectedHero) return
+    if (!saveHero(selectedHero.id)) {
+      setError('Could not save your hero. Please allow browser storage and try again.')
+      return
+    }
+    const pending = state?.pendingWaitingRoom
+    if (pending?.room) {
+      const characters = [...pending.room.playerCharacters]
+      characters[pending.currentPlayerIndex] = selectedHero.id
+      navigate('/waitingroom', {
+        replace: true,
+        state: { ...pending, room: { ...pending.room, playerCharacters: characters } },
+      })
+    } else {
+      navigate('/multiplayer')
+    }
+  }
 
   return (
     <main className="guest-content hero-select-content">
@@ -26,7 +55,10 @@ export default function HeroSelectPage() {
             type="button"
             className={`hero-card${selectedHero?.id === hero.id ? ' hero-card-selected' : ''}`}
             aria-pressed={selectedHero?.id === hero.id}
-            onClick={() => setSelectedHero(hero)}
+            onClick={() => {
+              setChosenId(hero.id)
+              setError('')
+            }}
           >
             <span className="hero-class">{hero.name}</span>
             <span className="hero-portrait">
@@ -44,11 +76,12 @@ export default function HeroSelectPage() {
       </p>
       {selectedHero && (
         <div className="hero-confirm">
-          <button className="button button-submit-auth" type="button">
+          <button className="button button-submit-auth" type="button" onClick={confirmHero}>
             Confirm
           </button>
         </div>
       )}
+      {error && <p className="auth-error" role="alert">{error}</p>}
       <Link className="button button-how-to-play hero-back" to="/multiplayer">Back to game options</Link>
     </main>
   )
