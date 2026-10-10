@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import maleKnight from './male_knight.png'
-import femaleKnight from './female_knight.png'
-import maleMage from './male_mage.png'
-import femaleMage from './female_mage.png'
+import maleKnight from './assets/male_knight.png'
+import femaleKnight from './assets/female_knight.png'
+import maleMage from './assets/male_mage.png'
+import femaleMage from './assets/female_mage.png'
 import './App.css'
 
 function Header() {
