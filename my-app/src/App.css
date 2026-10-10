@@ -15,18 +15,12 @@
   background: #dceef2;
 }
 
-.brand {
+.top-bar-username {
+  margin: 0;
   color: var(--text-h);
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 750;
-  letter-spacing: -0.6px;
-  text-decoration: none;
-}
-
-.top-bar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  letter-spacing: -0.3px;
 }
 
 .button {
@@ -184,17 +178,42 @@
   border-color: var(--accent);
 }
 
-.help-icon {
+.how-to-play-symbol {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: 1.5px solid currentColor;
+  width: 44px;
+  height: 44px;
+  border: 2.5px solid #244c60;
   border-radius: 50%;
-  font-size: 14px;
-  font-weight: 750;
+  color: #244c60;
+  background: #f4f8f6;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
   line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.how-to-play-symbol:hover {
+  transform: translateY(-1px);
+  background: #e6f1f3;
+  border-color: var(--accent);
+  color: var(--accent-hover);
+}
+
+.how-to-play-symbol:focus-visible {
+  outline: 3px solid var(--accent-border);
+  outline-offset: 3px;
 }
 
 .how-to-play {
@@ -646,17 +665,16 @@
     gap: 10px;
   }
 
-  .brand {
-    font-size: 18px;
+  .top-bar-username {
+    font-size: 16px;
   }
 
-  .top-bar-actions {
-    gap: 8px;
-  }
-
-  .top-bar-actions .button {
-    padding-inline: 9px;
-    font-size: 12px;
+  .how-to-play-symbol {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
   }
 
   .button {
