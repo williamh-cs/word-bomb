@@ -5,6 +5,12 @@ import cors from 'cors'
 import session from 'express-session'
 import { Server } from 'socket.io'
 import authRoutes from './routes/authRoutes.js'
+import {
+  createRoom,
+  handleDisconnect,
+  joinRoom,
+  listPublicRooms,
+} from './rooms.js'
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -28,7 +34,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
@@ -50,11 +56,45 @@ const io = new Server(httpServer, {
   },
 })
 
+function broadcastRooms() {
+  io.emit('rooms:updated', listPublicRooms())
+}
+
 io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`)
+  socket.emit('rooms:updated', listPublicRooms())
+
+  socket.on('room:create', (payload, acknowledge) => {
+    const result = createRoom(socket, payload)
+
+    if (typeof acknowledge === 'function') {
+      acknowledge(result)
+    }
+
+    if (!result.error) {
+      broadcastRooms()
+    }
+  })
+
+  socket.on('room:join', (payload, acknowledge) => {
+    const result = joinRoom(socket, payload)
+
+    if (typeof acknowledge === 'function') {
+      acknowledge(result)
+    }
+
+    if (!result.error) {
+      broadcastRooms()
+    }
+  })
 
   socket.on('disconnect', () => {
+    const leftRoom = handleDisconnect(socket)
     console.log(`Player disconnected: ${socket.id}`)
+
+    if (leftRoom) {
+      broadcastRooms()
+    }
   })
 })
 
