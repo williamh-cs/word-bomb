@@ -391,6 +391,98 @@
   outline-offset: 2px;
 }
 
+.public-room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  max-height: 300px;
+  margin-bottom: 18px;
+  padding: 10px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-color: #829071 #f1ebd8;
+  border: 2px solid #829071;
+  background: #f1ebd8;
+}
+
+.public-room-card {
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  box-sizing: border-box;
+  border: 2px solid #b4b99b;
+  color: var(--text-h);
+  background: #fff8e8;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.public-room-card:hover,
+.public-room-card[aria-pressed='true'] {
+  border-color: #356c52;
+  background: #e7f5dd;
+}
+
+.public-room-card:focus-visible,
+.public-room-list:focus-visible {
+  outline: 3px solid #356c52;
+  outline-offset: 2px;
+}
+
+.public-room-name {
+  display: block;
+  overflow-wrap: anywhere;
+  font: 700 14px/1.5 var(--mono);
+}
+
+.public-room-details {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-top: 8px;
+  color: #526441;
+  font: 600 11px/1.5 var(--mono);
+}
+
+.button-join:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.game-option > .public-room-note {
+  min-height: 0;
+  margin: 18px 0 0;
+  font-size: 12px;
+}
+
+.multiplayer-host {
+  width: 100%;
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 2px solid #d3bf8a;
+}
+
+.multiplayer-guest-greeting {
+  margin: 0 0 32px;
+  color: var(--text-h);
+  text-align: center;
+  font: 700 clamp(15px, 3vw, 22px)/1.5 var(--mono);
+}
+
+.multiplayer-host > p:not(.eyebrow) {
+  margin: 0 0 20px;
+  color: var(--text);
+  font-size: 15px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -654,18 +746,20 @@
 }
 
 .hero-portrait {
+  position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 1;
+  flex-shrink: 0;
   overflow: hidden;
   border: 2px solid #829071;
   background: #4b4f52;
 }
 
 .hero-sprite {
+  position: absolute;
+  inset: 0;
   display: block;
-  width: 100%;
-  height: 100%;
   background-size: 400% 300%;
   background-position: left top;
   image-rendering: pixelated;
@@ -724,6 +818,112 @@
   .hero-card:hover .hero-sprite,
   .hero-card:focus-visible .hero-sprite { animation: none; }
   .hero-card { transition: none; }
+}
+
+.game-board-page {
+  min-height: calc(100svh - 77px);
+  padding: clamp(24px, 4vw, 48px);
+  box-sizing: border-box;
+}
+
+.game-board-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto 28px;
+}
+
+.game-board-toolbar .eyebrow { margin-bottom: 6px; font-family: var(--mono); }
+.game-board-toolbar h1 { margin: 0; font: 900 clamp(24px, 4vw, 36px)/1.2 var(--mono); }
+
+.game-board-scene {
+  position: relative;
+  width: min(100%, 1280px);
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  border: 3px solid #43533b;
+  box-sizing: border-box;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 0 0 4px #d0b77a, 0 0 0 7px #43533b, 8px 12px 0 #43533b26;
+}
+
+.board-preview-label {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 8px 12px;
+  background: #263d32;
+  color: #fff8e8;
+  font: 700 10px/1.5 var(--mono);
+  letter-spacing: 1px;
+}
+
+.board-player-slots {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: 12%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.board-player-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(22%, 170px);
+  padding: 14px 8px;
+  border: 2px solid #43533b;
+  background: #fff8e8ed;
+  box-shadow: 3px 3px 0 #d0b77a;
+  font: 700 13px/1.5 var(--mono);
+  text-align: center;
+}
+
+.board-player-number {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #d0b77a;
+  color: #fff8e8;
+  background: #356c52;
+}
+
+.board-player-status { font-size: 10px; color: var(--text); }
+
+.board-word-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: min(40%, 320px);
+  padding: clamp(10px, 1.5vw, 18px);
+  box-sizing: border-box;
+  border: 3px solid #43533b;
+  background: rgba(255, 248, 232, 0.65);
+  box-shadow: 0 0 0 3px #d0b77a;
+  text-align: center;
+}
+
+.board-word-panel .eyebrow { font: 700 10px/1.5 var(--mono); margin-bottom: 8px; }
+.board-word-panel h2 { margin: 0; font: 900 clamp(22px, 3.5vw, 36px)/1.3 var(--mono); }
+.board-word-panel h2 span { color: #356c52; border-bottom: 3px solid #94732d; }
+.board-word-panel > p:not(.eyebrow) { margin: 12px 0; font-size: 13px; }
+.board-waiting { font: 700 10px/1.5 var(--mono); color: #526441; }
+.board-preview-note { margin: 28px 0 0; text-align: center; font-size: 14px; }
+
+@media (max-width: 600px) {
+  .game-board-page { min-height: calc(100svh - 69px); padding: 24px 16px; }
+  .game-board-scene { aspect-ratio: auto; min-height: 540px; }
+  .board-word-panel { top: 64px; right: 12px; width: 74%; }
+  .board-player-slots { bottom: 7%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .board-player-slot { width: auto; }
 }
 
 /* A fresh burst of emerald magic on each route change. */
