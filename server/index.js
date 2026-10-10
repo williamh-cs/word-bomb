@@ -1,30 +1,44 @@
-
 import "dotenv/config";
 import express from "express";
 import http from "node:http";
 import cors from "cors";
+import session from "express-session";
 import { Server } from "socket.io";
 
 const app = express();
 const httpServer = http.createServer(app);
 
-const PORT = process.env.PORT || 3000;
-const CLIENT_URL =
-  process.env.CLIENT_URL || "http://localhost:5173";
+const PORT = process.env.PORT;
+const CLIENT_URL = process.env.CLIENT_URL;
 
-app.use(cors({ origin: CLIENT_URL }));
+app.use(
+  cors({
+    origin: CLIENT_URL,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "Word Bomb server is running!",
-  });
-});
+app.use(
+  session({
+    name: "wordbomb.sid",
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false, 
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24
+    },
+  })
+);
 
 const io = new Server(httpServer, {
   cors: {
     origin: CLIENT_URL,
+    credentials: true,
   },
 });
 
