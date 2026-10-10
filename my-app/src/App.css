@@ -626,6 +626,13 @@
   background: #26452f;
 }
 
+.auth-error {
+  margin: 0;
+  color: #8b2e2e;
+  font-size: 14px;
+  font-weight: 650;
+}
+
 .auth-switch {
   margin-top: 20px;
   color: var(--text);

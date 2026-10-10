@@ -1,7 +1,46 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function AuthPage({ mode }) {
   const isSignIn = mode === 'signin'
+  const navigate = useNavigate()
+  const { setUser } = useAuth()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setError('')
+    setSubmitting(true)
+
+    const endpoint = isSignIn ? '/api/auth/register' : '/api/auth/login'
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        setError(data.error || 'Something went wrong.')
+        return
+      }
+
+      setUser(data.user)
+      navigate('/multiplayer', { replace: true })
+    } catch {
+      setError('Could not reach the server.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <main className="auth-content">
@@ -20,30 +59,16 @@ export default function AuthPage({ mode }) {
             : 'Log in to continue your Word Bomb adventure.'}
         </p>
 
-        <form
-          className="auth-form"
-          onSubmit={(event) => event.preventDefault()}
-        >
-          {isSignIn && (
-            <>
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                placeholder="Choose a username"
-                required
-              />
-            </>
-          )}
-          <label htmlFor="email">Email</label>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label htmlFor="username">Username</label>
           <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
+            id="username"
+            name="username"
+            type="text"
+            autoComplete="username"
+            placeholder={isSignIn ? 'Choose a username' : 'Enter your username'}
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
             required
           />
           <label htmlFor="password">Password</label>
@@ -53,9 +78,20 @@ export default function AuthPage({ mode }) {
             type="password"
             autoComplete={isSignIn ? 'new-password' : 'current-password'}
             placeholder="Enter your password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
             required
           />
-          <button className="button button-submit-auth" type="submit">
+          {error && (
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button
+            className="button button-submit-auth"
+            type="submit"
+            disabled={submitting}
+          >
             <span className="auth-button-arrow" aria-hidden="true">▶</span>
             {isSignIn ? 'Create account' : 'Log in'}
           </button>
