@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
+    "migrate:latest": "knex migrate:latest --knexfile knexfile.cjs",
+    "migrate:rollback": "knex migrate:rollback --knexfile knexfile.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

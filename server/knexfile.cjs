@@ -1,20 +1,33 @@
+const path = require('node:path')
 
-require("dotenv").config();
+require('dotenv').config({ path: path.join(__dirname, '.env') })
+
+const databaseUrl = process.env.DATABASE_URL
+
+if (!databaseUrl) {
+  throw new Error(
+    'DATABASE_URL is required. Set it to your Neon Postgres connection string.',
+  )
+}
+
+const neonConnection = {
+  client: 'pg',
+  connection: {
+    connectionString: databaseUrl,
+    ssl: { rejectUnauthorized: true },
+  },
+  pool: {
+    min: 0,
+    max: 5,
+  },
+  migrations: {
+    directory: './migrations',
+    tableName: 'knex_migrations',
+    loadExtensions: ['.mjs'],
+  },
+}
 
 module.exports = {
-  development: {
-    client: "pg",
-    connection: {
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-    },
-    migrations: {
-      directory: "./migrations",
-      tableName: "knex_migrations",
-      loadExtensions: [".mjs"],
-    },
-  },
-};
+  development: neonConnection,
+  production: neonConnection,
+}
