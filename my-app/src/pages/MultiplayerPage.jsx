@@ -1,15 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { io } from 'socket.io-client'
 import { useAuth } from '../context/AuthContext'
-
-function createRoomCode() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 6; i += 1) {
-    code += alphabet[Math.floor(Math.random() * alphabet.length)]
-  }
-  return code
-}
 
 export default function MultiplayerPage() {
   const { user } = useAuth()
@@ -17,16 +9,21 @@ export default function MultiplayerPage() {
   const [guestNumber] = useState(() => Math.floor(1000 + Math.random() * 9000))
   const [rooms, setRooms] = useState([])
   const [currentRoomCode, setCurrentRoomCode] = useState(null)
+  const [connectionError, setConnectionError] = useState('')
+  const [lobbyError, setLobbyError] = useState('')
 
   const [capacity, setCapacity] = useState(2)
   const [visibility, setVisibility] = useState('public')
   const [hostPassword, setHostPassword] = useState('')
   const [hostError, setHostError] = useState('')
+  const [creatingRoom, setCreatingRoom] = useState(false)
 
   const [pendingRoom, setPendingRoom] = useState(null)
   const [joinPassword, setJoinPassword] = useState('')
   const [joinError, setJoinError] = useState('')
+  const [joiningRoom, setJoiningRoom] = useState(false)
 
+  const socketRef = useRef(null)
   const hostDialogRef = useRef(null)
   const passwordDialogRef = useRef(null)
   const hostHeadingId = useId()
@@ -34,11 +31,51 @@ export default function MultiplayerPage() {
   const displayName = user?.username ?? `Guest ${guestNumber}`
 
   useEffect(() => {
+    const socket = io({
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+    })
+
+    socketRef.current = socket
+
+    socket.on('connect', () => {
+      setConnectionError('')
+    })
+
+    socket.on('connect_error', () => {
+      setConnectionError('Could not connect to multiplayer server.')
+    })
+
+    socket.on('rooms:updated', (nextRooms) => {
+      setRooms(Array.isArray(nextRooms) ? nextRooms : [])
+    })
+
+    socket.on('disconnect', () => {
+      setCurrentRoomCode(null)
+    })
+
+    return () => {
+      socket.removeAllListeners()
+      socket.disconnect()
+      socketRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
     if (visibility === 'public') {
       setHostPassword('')
       setHostError('')
     }
   }, [visibility])
+
+  useEffect(() => {
+    if (
+      currentRoomCode &&
+      !rooms.some((room) => room.code === currentRoomCode)
+    ) {
+      setCurrentRoomCode(null)
+    }
+  }, [rooms, currentRoomCode])
 
   function openHostDialog() {
     setCapacity(2)
@@ -59,27 +96,31 @@ export default function MultiplayerPage() {
     setJoinError('')
   }
 
-  function withPlayerLeft(roomList, roomCode) {
-    if (!roomCode) return roomList
+  function requestJoin(room, password = '', { privateJoin = false } = {}) {
+    const socket = socketRef.current
+    if (!socket?.connected) {
+      const message = 'Not connected to the server.'
+      if (privateJoin) setJoinError(message)
+      else setLobbyError(message)
+      return
+    }
 
-    return roomList
-      .map((room) =>
-        room.code === roomCode
-          ? { ...room, players: Math.max(0, room.players - 1) }
-          : room,
-      )
-      .filter((room) => room.players > 0)
-  }
+    setJoiningRoom(true)
+    socket.emit('room:join', { code: room.code, password }, (result) => {
+      setJoiningRoom(false)
 
-  function enterRoom(room, roomList = rooms) {
-    const updatedRooms = withPlayerLeft(roomList, currentRoomCode).map((entry) =>
-      entry.code === room.code
-        ? { ...entry, players: Math.min(entry.capacity, entry.players + 1) }
-        : entry,
-    )
+      if (!result || result.error) {
+        const message = result?.error || 'Could not join that room.'
+        if (privateJoin) setJoinError(message)
+        else setLobbyError(message)
+        return
+      }
 
-    setRooms(updatedRooms)
-    setCurrentRoomCode(room.code)
+      setCurrentRoomCode(result.room.code)
+      setJoinError('')
+      setLobbyError('')
+      if (privateJoin) closePasswordDialog()
+    })
   }
 
   function handleCreateRoom(event) {
@@ -90,24 +131,37 @@ export default function MultiplayerPage() {
       return
     }
 
-    const room = {
-      code: createRoomCode(),
-      name: `${displayName}'s room`,
-      players: 1,
-      capacity,
-      isPrivate: visibility === 'private',
-      password: visibility === 'private' ? hostPassword.trim() : '',
-      hostName: displayName,
+    const socket = socketRef.current
+    if (!socket?.connected) {
+      setHostError('Not connected to the server.')
+      return
     }
 
-    setRooms([room, ...withPlayerLeft(rooms, currentRoomCode)])
-    setCurrentRoomCode(room.code)
-    closeHostDialog()
+    setCreatingRoom(true)
+    socket.emit(
+      'room:create',
+      {
+        capacity,
+        isPrivate: visibility === 'private',
+        password: visibility === 'private' ? hostPassword.trim() : '',
+        hostName: displayName,
+      },
+      (result) => {
+        setCreatingRoom(false)
+
+        if (!result || result.error) {
+          setHostError(result?.error || 'Could not create room.')
+          return
+        }
+
+        setCurrentRoomCode(result.room.code)
+        closeHostDialog()
+      },
+    )
   }
 
   function handleRoomClick(room) {
     if (room.code === currentRoomCode) return
-
     if (room.players >= room.capacity) return
 
     if (room.isPrivate) {
@@ -118,21 +172,15 @@ export default function MultiplayerPage() {
       return
     }
 
-    enterRoom(room)
+    setLobbyError('')
+    requestJoin(room)
   }
 
   function handlePasswordJoin(event) {
     event.preventDefault()
 
     if (!pendingRoom) return
-
-    if (joinPassword !== pendingRoom.password) {
-      setJoinError('Incorrect password.')
-      return
-    }
-
-    enterRoom(pendingRoom)
-    closePasswordDialog()
+    requestJoin(pendingRoom, joinPassword, { privateJoin: true })
   }
 
   return (
@@ -148,6 +196,11 @@ export default function MultiplayerPage() {
           <p className="eyebrow">Find your party</p>
           <h2>Open rooms</h2>
           <p>Pick a room to join, or host your own game.</p>
+          {(connectionError || lobbyError) && (
+            <p className="auth-error" role="alert">
+              {connectionError || lobbyError}
+            </p>
+          )}
           <div className="public-room-list" role="list" aria-label="Open rooms">
             {rooms.length === 0 ? (
               <p className="public-room-empty">No open rooms right now.</p>
@@ -278,11 +331,11 @@ export default function MultiplayerPage() {
             </p>
           )}
 
-          <button className="button button-host" type="submit">
+          <button className="button button-host" type="submit" disabled={creatingRoom}>
             <span className="auth-button-arrow" aria-hidden="true">
               ▶
             </span>
-            Create room
+            {creatingRoom ? 'Creating…' : 'Create room'}
           </button>
         </form>
       </dialog>
@@ -331,11 +384,11 @@ export default function MultiplayerPage() {
               {joinError}
             </p>
           )}
-          <button className="button button-join" type="submit">
+          <button className="button button-join" type="submit" disabled={joiningRoom}>
             <span className="auth-button-arrow" aria-hidden="true">
               ▶
             </span>
-            Join room
+            {joiningRoom ? 'Joining…' : 'Join room'}
           </button>
         </form>
       </dialog>
