@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 
 // Sample rooms until live multiplayer room discovery is connected.
 const openRooms = [
@@ -17,14 +17,26 @@ export default function MultiplayerPage() {
   const [publicRoom, setPublicRoom] = useState('')
   const navigate = useNavigate()
   const { state } = useLocation()
+  const { user } = useOutletContext()
 
-  function chooseHero(mode, code = gameCode.trim()) {
-    navigate('/heroes', { state: { mode, gameCode: code, guestNumber } })
+  function enterGame(mode, code = gameCode.trim()) {
+    const isGuest = !user && state?.playAsGuest === true
+    navigate(isGuest ? '/game-board' : '/heroes', {
+      state: {
+        mode,
+        gameCode: code,
+        guestNumber,
+        playAsGuest: isGuest,
+        ...(isGuest && { heroId: 'guest_player' }),
+      },
+    })
   }
 
   return (
     <main className="guest-content">
-      {state?.playAsGuest === true && (
+      {user ? (
+        <p className="multiplayer-guest-greeting">Welcome, {user.name}!</p>
+      ) : state?.playAsGuest === true && (
         <p className="multiplayer-guest-greeting">Welcome, Wandering Guest {guestNumber}!</p>
       )}
 
@@ -55,7 +67,7 @@ export default function MultiplayerPage() {
             className="button button-join"
             type="button"
             disabled={!publicRoom}
-            onClick={() => chooseHero('join', publicRoom)}
+            onClick={() => enterGame('join', publicRoom)}
           >
             <span className="auth-button-arrow" aria-hidden="true">▶</span>
             Join public game
@@ -77,7 +89,7 @@ export default function MultiplayerPage() {
             value={gameCode}
             onChange={(event) => setGameCode(event.target.value)}
           />
-          <button className="button button-join" type="button" onClick={() => chooseHero('join')}>
+          <button className="button button-join" type="button" onClick={() => enterGame('join')}>
             <span className="auth-button-arrow" aria-hidden="true">▶</span>
             Join game
           </button>
@@ -86,7 +98,7 @@ export default function MultiplayerPage() {
             <p className="eyebrow">Gather your party</p>
             <h2>Host a game</h2>
             <p>Create a room and invite your friends to join.</p>
-            <button className="button button-host" type="button" onClick={() => chooseHero('host', '')}>
+            <button className="button button-host" type="button" onClick={() => enterGame('host', '')}>
               <span className="auth-button-arrow" aria-hidden="true">▶</span>
               Host game
             </button>

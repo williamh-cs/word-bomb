@@ -29,6 +29,26 @@
   gap: 12px;
 }
 
+.profile-circle {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: 2px solid #43533b;
+  border-radius: 50%;
+  color: #fff8e8;
+  background: #356c52;
+  text-decoration: none;
+  font: 800 20px/1 var(--mono);
+}
+
+.profile-circle:focus-visible { outline: 3px solid var(--accent-border); outline-offset: 3px; }
+.profile-circle:hover { background: #26452f; }
+.user-nav-button { font-family: var(--mono); border-radius: 0; }
+.user-profile { text-align: center; overflow-wrap: anywhere; }
+.profile-avatar { width: 72px; height: 72px; margin-bottom: 24px; font-size: 32px; }
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -897,6 +917,15 @@
 }
 
 .board-player-status { font-size: 10px; color: var(--text); }
+
+.board-guest-portrait {
+  position: relative;
+  display: block;
+  width: 88px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid #d0b77a;
+}
 
 .board-word-panel {
   position: absolute;

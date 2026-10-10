@@ -9,6 +9,8 @@ import FourPlayerBoardPage from './pages/FourPlayerBoardPage'
 import SignInPage from './pages/SignInPage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
+import UserPage from './pages/UserPage'
+import ShopPage from './pages/ShopPage'
 import './App.css'
 
 export default function App() {
@@ -24,6 +26,8 @@ export default function App() {
         <Route path="game-board/4-players" element={<FourPlayerBoardPage />} />
         <Route path="signin" element={<SignInPage />} />
         <Route path="login" element={<LoginPage />} />
+        <Route path="profile" element={<UserPage />} />
+        <Route path="shop" element={<ShopPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

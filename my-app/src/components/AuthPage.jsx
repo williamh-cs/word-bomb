@@ -1,7 +1,18 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 
 export default function AuthPage({ mode }) {
   const isSignIn = mode === 'signin'
+  const navigate = useNavigate()
+  const { signIn } = useOutletContext()
+
+  function handleSubmit(event) {
+    event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    const email = String(data.get('email')).trim()
+    const name = isSignIn ? String(data.get('username')).trim() : email.split('@')[0]
+    signIn({ name: name || 'Adventurer', email })
+    navigate('/multiplayer', { replace: true })
+  }
 
   return (
     <main className="auth-content">
@@ -22,7 +33,7 @@ export default function AuthPage({ mode }) {
 
         <form
           className="auth-form"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={handleSubmit}
         >
           {isSignIn && (
             <>

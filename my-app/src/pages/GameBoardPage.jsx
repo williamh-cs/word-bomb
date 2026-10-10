@@ -1,7 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { gameBackgrounds } from '../data/gameBackgrounds'
+import guestPlayer from '../guest_player.png'
 
 export default function GameBoardPage({ playerCount = 2 }) {
+  const { state } = useLocation()
+  const hasGuest = state?.playAsGuest === true && state?.heroId === 'guest_player'
   const count = [2, 3, 4].includes(playerCount) ? playerCount : 2
 
   return (
@@ -22,9 +25,21 @@ export default function GameBoardPage({ playerCount = 2 }) {
         <div className="board-player-slots" aria-label="Player slots">
           {Array.from({ length: count }, (_, index) => (
             <div className="board-player-slot" key={index}>
-              <span className="board-player-number" aria-hidden="true">P{index + 1}</span>
-              <span>Player {index + 1}</span>
-              <span className="board-player-status">Waiting for hero</span>
+              {index === 0 && hasGuest ? (
+                <>
+                  <span className="board-guest-portrait" role="img" aria-label="Guest character">
+                    <span className="hero-sprite" style={{ backgroundImage: `url(${guestPlayer})` }} />
+                  </span>
+                  <span>Wandering Guest {state.guestNumber}</span>
+                  <span className="board-player-status">Guest adventurer</span>
+                </>
+              ) : (
+                <>
+                  <span className="board-player-number" aria-hidden="true">P{index + 1}</span>
+                  <span>Player {index + 1}</span>
+                  <span className="board-player-status">Waiting for hero</span>
+                </>
+              )}
             </div>
           ))}
         </div>
