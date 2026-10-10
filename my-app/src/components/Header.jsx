@@ -1,5 +1,8 @@
+import { useAuth } from '../context/AuthContext'
+
 export default function Header() {
-  const username = 'Guest'
+  const { user } = useAuth()
+  const username = user?.username ?? 'Guest'
 
   return (
     <header className="top-bar">

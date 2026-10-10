@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
+import { AuthProvider } from './context/AuthContext'
 import FourPlayerBoardPage from './pages/FourPlayerBoardPage'
 import GameBoardPage from './pages/GameBoardPage'
 import HeroSelectPage from './pages/HeroSelectPage'
@@ -13,19 +14,21 @@ import './App.css'
 
 export default function App() {
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="multiplayer" element={<MultiplayerPage />} />
-        <Route path="guest" element={<Navigate to="/multiplayer" replace />} />
-        <Route path="heroes" element={<HeroSelectPage />} />
-        <Route path="game-board" element={<GameBoardPage />} />
-        <Route path="game-board/3-players" element={<ThreePlayerBoardPage />} />
-        <Route path="game-board/4-players" element={<FourPlayerBoardPage />} />
-        <Route path="signin" element={<SignInPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="multiplayer" element={<MultiplayerPage />} />
+          <Route path="guest" element={<Navigate to="/multiplayer" replace />} />
+          <Route path="heroes" element={<HeroSelectPage />} />
+          <Route path="game-board" element={<GameBoardPage />} />
+          <Route path="game-board/3-players" element={<ThreePlayerBoardPage />} />
+          <Route path="game-board/4-players" element={<FourPlayerBoardPage />} />
+          <Route path="signin" element={<SignInPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </AuthProvider>
   )
 }
