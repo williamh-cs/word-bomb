@@ -55,7 +55,7 @@ export default function AuthPage({ mode }) {
     <main className="auth-content">
       <section className="auth-card" aria-labelledby="auth-heading">
         <div className="auth-panel-bar" aria-hidden="true">
-          <span>WORD BOMB / ADVENTURER'S GUILD</span>
+          <span>DRAGON'S EGG / ADVENTURER'S GUILD</span>
           <span>◆</span>
         </div>
         <p className="eyebrow">
@@ -65,7 +65,7 @@ export default function AuthPage({ mode }) {
         <p className="auth-description">
           {isSignIn
             ? 'Create an account to save your progress and play with friends.'
-            : 'Log in to continue your Word Bomb adventure.'}
+            : "Log in to continue your Dragon's Egg adventure."}
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -107,7 +107,7 @@ export default function AuthPage({ mode }) {
         </form>
 
         <p className="auth-switch">
-          {isSignIn ? 'Already have an account?' : 'New to Word Bomb?'}{' '}
+          {isSignIn ? 'Already have an account?' : "New to Dragon's Egg?"}{' '}
           <Link to={isSignIn ? '/login' : '/signup'}>
             {isSignIn ? 'Log in' : 'Sign up'}
           </Link>

@@ -1,57 +1,72 @@
-import { useId, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+﻿import { useEffect, useId, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import useSelectedHero from '../hooks/useSelectedHero'
-
-function createRoomCode() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 6; i += 1) {
-    code += alphabet[Math.floor(Math.random() * alphabet.length)]
-  }
-  return code
-}
+import { heroes } from '../data/heroes'
+import { lobbySocket } from '../lib/lobbySocket'
 
 export default function MultiplayerPage() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const { heroId } = useSelectedHero()
   const { state } = useLocation()
   const navigate = useNavigate()
   const [guestNumber] = useState(() => Math.floor(1000 + Math.random() * 9000))
   const [rooms, setRooms] = useState([])
-  const [currentRoomCode, setCurrentRoomCode] = useState(null)
-
+  const [connected, setConnected] = useState(lobbySocket.connected)
+  const [connectionError, setConnectionError] = useState('')
+  const [lobbyError, setLobbyError] = useState('')
+  const [filter, setFilter] = useState('all')
   const [capacity, setCapacity] = useState(2)
   const [visibility, setVisibility] = useState('public')
   const [hostPassword, setHostPassword] = useState('')
   const [hostError, setHostError] = useState('')
-
+  const [creatingRoom, setCreatingRoom] = useState(false)
   const [pendingRoom, setPendingRoom] = useState(null)
   const [joinPassword, setJoinPassword] = useState('')
   const [joinError, setJoinError] = useState('')
-
+  const [joiningRoom, setJoiningRoom] = useState(false)
   const hostDialogRef = useRef(null)
   const passwordDialogRef = useRef(null)
   const hostHeadingId = useId()
   const passwordHeadingId = useId()
   const isGuest = state?.playAsGuest === true || !user
-  const displayName = isGuest ? `Guest ${guestNumber}` : user.username
+  const displayName = isGuest ? `Wandering Guest ${guestNumber}` : user.username
   const character = isGuest ? 'guest-player' : heroId
+  const selectedHero = heroes.find((hero) => hero.id === heroId)
+  const visibleRooms = rooms.filter((room) => filter === 'all' || (filter === 'private' ? room.isPrivate : !room.isPrivate))
+  const busy = creatingRoom || joiningRoom
+
+  useEffect(() => {
+    function onConnect() {
+      setConnected(true)
+      setConnectionError('')
+      lobbySocket.emit('rooms:list')
+    }
+    function onError() {
+      setConnected(false)
+      setConnectionError('Unable to connect. We’re trying again automatically.')
+    }
+    function onDisconnect() { setConnected(false) }
+    function onRooms(nextRooms) { setRooms(Array.isArray(nextRooms) ? nextRooms : []) }
+    lobbySocket.on('connect', onConnect)
+    lobbySocket.on('connect_error', onError)
+    lobbySocket.on('disconnect', onDisconnect)
+    lobbySocket.on('rooms:updated', onRooms)
+    if (lobbySocket.connected) onConnect()
+    else lobbySocket.connect()
+    return () => {
+      lobbySocket.off('connect', onConnect)
+      lobbySocket.off('connect_error', onError)
+      lobbySocket.off('disconnect', onDisconnect)
+      lobbySocket.off('rooms:updated', onRooms)
+    }
+  }, [])
 
   function openWaitingRoom(room, isHost) {
     const waitingState = {
-        isHost,
-        currentPlayerIndex: isHost ? 0 : room.playerNames.length - 1,
-        room: {
-          code: room.code,
-          name: room.name,
-          capacity: room.capacity,
-          isPrivate: room.isPrivate,
-          hostName: room.hostName,
-          playerNames: room.playerNames,
-          playerCharacters: room.playerCharacters,
-          status: room.status,
-        },
+      isHost,
+      currentPlayerIndex: isHost ? 0 : room.playerNames.length - 1,
+      room,
     }
     if (!isGuest && !heroId) {
       navigate('/heroes', { state: { pendingWaitingRoom: waitingState } })
@@ -59,7 +74,6 @@ export default function MultiplayerPage() {
     }
     navigate('/waitingroom', { state: waitingState })
   }
-
   function openHostDialog() {
     setCapacity(2)
     setVisibility('public')
@@ -67,134 +81,116 @@ export default function MultiplayerPage() {
     setHostError('')
     hostDialogRef.current?.showModal()
   }
-
   function closeHostDialog() {
-    hostDialogRef.current?.close()
+    if (!creatingRoom) hostDialogRef.current?.close()
   }
-
   function closePasswordDialog() {
+    if (joiningRoom) return
     passwordDialogRef.current?.close()
     setPendingRoom(null)
     setJoinPassword('')
     setJoinError('')
   }
-
-  function withPlayerLeft(roomList, roomCode) {
-    if (!roomCode) return roomList
-
-    return roomList
-      .map((room) =>
-        room.code === roomCode
-          ? { ...room, players: Math.max(0, room.players - 1) }
-          : room,
-      )
-      .filter((room) => room.players > 0)
+  function requestJoin(room, password = '', { privateJoin = false } = {}) {
+    if (busy) return
+    const setError = privateJoin ? setJoinError : setLobbyError
+    setError('')
+    if (!lobbySocket.connected) { setError('Not connected to the server. Please try again.'); return }
+    setJoiningRoom(true)
+    lobbySocket.timeout(8000).emit('room:join', { code: room.code, password, playerName: displayName, character }, (error, result) => {
+      setJoiningRoom(false)
+      if (error || !result?.room || result.error) {
+        setError(result?.error || 'Could not join the room. Please try again.')
+        return
+      }
+      passwordDialogRef.current?.close()
+      openWaitingRoom(result.room, false)
+    })
   }
-
-  function enterRoom(room, roomList = rooms) {
-    if (room.players >= room.capacity) return
-    const updatedRooms = withPlayerLeft(roomList, currentRoomCode).map((entry) =>
-      entry.code === room.code
-        ? {
-            ...entry,
-            players: entry.players + 1,
-            playerNames: [...(entry.playerNames ?? [entry.hostName]), displayName],
-            playerCharacters: [...(entry.playerCharacters ?? [null]), character],
-          }
-        : entry,
-    )
-
-    setRooms(updatedRooms)
-    setCurrentRoomCode(room.code)
-    openWaitingRoom(updatedRooms.find((entry) => entry.code === room.code), false)
-  }
-
   function handleCreateRoom(event) {
     event.preventDefault()
-
-    if (visibility === 'private' && !hostPassword.trim()) {
-      setHostError('Set a password for private rooms.')
-      return
-    }
-
-    const room = {
-      code: createRoomCode(),
-      name: `${displayName}'s room`,
-      players: 1,
-      capacity,
-      isPrivate: visibility === 'private',
+    if (busy) return
+    if (visibility === 'private' && !hostPassword.trim()) { setHostError('Set a password for private rooms.'); return }
+    if (!lobbySocket.connected) { setHostError('Not connected to the server. Please try again.'); return }
+    setCreatingRoom(true)
+    setHostError('')
+    lobbySocket.timeout(8000).emit('room:create', {
+      capacity, isPrivate: visibility === 'private',
       password: visibility === 'private' ? hostPassword.trim() : '',
-      hostName: displayName,
-      playerNames: [displayName],
-      playerCharacters: [character],
-      status: 'Waiting for players',
-    }
-
-    setRooms([room, ...withPlayerLeft(rooms, currentRoomCode)])
-    setCurrentRoomCode(room.code)
-    closeHostDialog()
-    openWaitingRoom(room, true)
+      hostName: displayName, character,
+    }, (error, result) => {
+      setCreatingRoom(false)
+      if (error || !result?.room || result.error) {
+        setHostError(result?.error || 'Could not create the room. Please try again.')
+        return
+      }
+      hostDialogRef.current?.close()
+      openWaitingRoom(result.room, true)
+    })
   }
-
   function handleRoomClick(room) {
-    if (room.code === currentRoomCode) return
-
-    if (room.players >= room.capacity) return
-
+    if (busy || room.players >= room.capacity) return
     if (room.isPrivate) {
       setPendingRoom(room)
       setJoinPassword('')
       setJoinError('')
       passwordDialogRef.current?.showModal()
-      return
-    }
-
-    enterRoom(room)
+    } else requestJoin(room)
   }
-
   function handlePasswordJoin(event) {
     event.preventDefault()
-
-    if (!pendingRoom) return
-
-    if (joinPassword !== pendingRoom.password) {
-      setJoinError('Incorrect password.')
-      return
-    }
-
-    enterRoom(pendingRoom)
-    closePasswordDialog()
+    if (pendingRoom) requestJoin(pendingRoom, joinPassword, { privateJoin: true })
   }
-
   return (
-    <main className="guest-content">
-      {state?.playAsGuest === true && (
-        <p className="multiplayer-guest-greeting">
-          Welcome, Wandering Guest {guestNumber}!
-        </p>
-      )}
+    <main className="guest-content multiplayer-page">
 
-      <section className="game-options" aria-label="Game options">
+
+      <header className="multiplayer-heading">
+        <div>
+          <p className="eyebrow">The gathering place</p>
+          <h1>Find your party</h1>
+          <p>Join an open room or bring your friends together.</p>
+        </div>
+        <span className={`lobby-connection${connected ? ' lobby-connection-online' : ''}`} role="status">
+          <span aria-hidden="true" />{connected ? 'Connected' : 'Connecting…'}
+        </span>
+      </header>
+      <div className="multiplayer-layout">
+      <section className="game-options multiplayer-rooms" aria-label="Game options">
         <div className="game-option">
-          <p className="eyebrow">Find your party</p>
-          <h2>Open rooms</h2>
-          <p>Pick a room to join, or host your own game.</p>
-          <div className="public-room-list" role="list" aria-label="Open rooms">
-            {rooms.length === 0 ? (
-              <p className="public-room-empty">No open rooms right now.</p>
+          <div className="lobby-section-heading">
+            <h2>Open rooms</h2>
+            <span className="lobby-room-count">{rooms.length} rooms</span>
+          </div>
+          <div className="lobby-filters" role="group" aria-label="Filter rooms">
+            {['all', 'public', 'private'].map((value) => (
+              <button className="lobby-filter" key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
+                {value === 'all' ? 'All rooms' : value === 'public' ? 'Public' : 'Private'}
+              </button>
+            ))}
+          </div>
+          {(connectionError || lobbyError) && (
+            <p className="auth-error" role="alert">
+              {connectionError || lobbyError}
+            </p>
+          )}
+          <div className="public-room-list" aria-label="Open rooms" aria-busy={joiningRoom}>
+            {visibleRooms.length === 0 ? (
+              <div className="lobby-empty">
+                <span className="lobby-empty-symbol" aria-hidden="true">◇</span>
+                <h3>{connected ? 'Your next game starts here' : 'Finding your party…'}</h3>
+                <p>{connected ? (rooms.length ? 'No rooms match this filter. Try All rooms or host your own.' : 'No rooms yet. Host a game and invite your friends.') : 'Rooms will appear once the server connects.'}</p>
+              </div>
             ) : (
-              rooms.map((room) => {
-                const isCurrent = room.code === currentRoomCode
+              visibleRooms.map((room) => {
                 const isFull = room.players >= room.capacity
 
                 return (
                   <button
                     key={room.code}
-                    className={`public-room-card${isCurrent ? ' public-room-card-joined' : ''}`}
+                    className="public-room-card"
                     type="button"
-                    role="listitem"
-                    disabled={isFull && !isCurrent}
-                    aria-current={isCurrent ? 'true' : undefined}
+                    disabled={isFull || busy || !connected || loading}
                     onClick={() => handleRoomClick(room)}
                   >
                     <span className="public-room-name">{room.name}</span>
@@ -202,46 +198,59 @@ export default function MultiplayerPage() {
                       <span>
                         {room.players}/{room.capacity} players
                       </span>
-                      <span>
-                        {isCurrent
-                          ? 'In room'
-                          : isFull
+                      <span className="lobby-room-badge">
+                        {isFull
                             ? 'Full'
                             : room.isPrivate
                               ? 'Private'
                               : 'Public'}
                       </span>
                     </span>
+                    <span className="lobby-room-action">{isFull ? 'Room full' : room.isPrivate ? 'Join with password →' : 'Join room →'}</span>
                   </button>
                 )
               })
             )}
           </div>
-          <button className="button button-host" type="button" onClick={openHostDialog}>
-            <span className="auth-button-arrow" aria-hidden="true">
-              ▶
-            </span>
-            Host game
-          </button>
+
         </div>
       </section>
+      <aside className="lobby-sidebar" aria-label="Your party">
+        <section className="lobby-profile">
+          <p className="eyebrow">Playing as</p>
+          <h2>{loading ? 'Loading…' : displayName}</h2>
+          <p>{isGuest ? 'Guest adventurer' : selectedHero ? `${selectedHero.title} · ${selectedHero.name}` : 'Choose a hero before entering your room.'}</p>
+          {!isGuest && <Link className="lobby-text-link" to="/heroes">{selectedHero ? 'Change hero' : 'Select hero'} →</Link>}
+        </section>
+        <section className="lobby-host-panel">
+          <p className="eyebrow">Make it your game</p>
+          <h2>Host a room</h2>
+          <p>Gather 2–4 players in a public room, or set a password for a private party.</p>
+          <button className="button button-host" type="button" disabled={!connected || busy || loading} onClick={openHostDialog}>Host game →</button>
+          <span className="lobby-host-note">You choose the room. You start the game.</span>
+        </section>
+        <p className="lobby-tip">Think fast. Keep the word chain going. You have 3 lives.</p>
+      </aside>
+      </div>
 
       <dialog
         ref={hostDialogRef}
         className="room-dialog"
         aria-labelledby={hostHeadingId}
+        onCancel={(event) => { if (creatingRoom) event.preventDefault() }}
         onClose={() => {
           setHostError('')
           setHostPassword('')
         }}
         onClick={(event) => {
-          if (event.target === event.currentTarget) {
+          const bounds = event.currentTarget.getBoundingClientRect()
+          if (event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) {
             closeHostDialog()
           }
         }}
       >
         <form method="dialog" className="room-dialog-close">
-          <button className="button" type="submit" aria-label="Close host settings">
+          <button className="button" type="submit" aria-label="Close host settings" disabled={creatingRoom}>
             <span aria-hidden="true">×</span>
           </button>
         </form>
@@ -312,12 +321,13 @@ export default function MultiplayerPage() {
               {hostError}
             </p>
           )}
+          <p className="lobby-dialog-hint">{visibility === 'private' ? 'Friends will need your password to join.' : 'Anyone in the lobby can join your room.'}</p>
 
-          <button className="button button-host" type="submit">
+          <button className="button button-host" type="submit" disabled={creatingRoom || !connected}>
             <span className="auth-button-arrow" aria-hidden="true">
-              ▶
+              →
             </span>
-            Create room
+            {creatingRoom ? 'Creating…' : 'Create room'}
           </button>
         </form>
       </dialog>
@@ -326,19 +336,21 @@ export default function MultiplayerPage() {
         ref={passwordDialogRef}
         className="room-dialog"
         aria-labelledby={passwordHeadingId}
+        onCancel={(event) => { if (joiningRoom) event.preventDefault() }}
         onClose={() => {
           setPendingRoom(null)
           setJoinPassword('')
           setJoinError('')
         }}
         onClick={(event) => {
-          if (event.target === event.currentTarget) {
+          const bounds = event.currentTarget.getBoundingClientRect()
+          if (event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) {
             closePasswordDialog()
           }
         }}
       >
         <form method="dialog" className="room-dialog-close">
-          <button className="button" type="submit" aria-label="Close password prompt">
+          <button className="button" type="submit" aria-label="Close password prompt" disabled={joiningRoom}>
             <span aria-hidden="true">×</span>
           </button>
         </form>
@@ -366,11 +378,11 @@ export default function MultiplayerPage() {
               {joinError}
             </p>
           )}
-          <button className="button button-join" type="submit">
+          <button className="button button-join" type="submit" disabled={joiningRoom || !connected}>
             <span className="auth-button-arrow" aria-hidden="true">
-              ▶
+              →
             </span>
-            Join room
+            {joiningRoom ? 'Joining…' : 'Join room'}
           </button>
         </form>
       </dialog>

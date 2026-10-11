@@ -1,64 +1,36 @@
-import { useEffect, useRef } from 'react'
+﻿import { useEffect, useRef } from 'react'
+import eggImage from '../assets/dragon_egg.png'
+import { loadCharacterFrames, loadGameIcon } from '../lib/spriteAssets'
 
-export default function BoardCharacter({ image, label }) {
+export default function BoardCharacter({ image, label, facing = 'right', grounded = false, pose = 'idle', actionStartedAt = null }) {
   const canvasRef = useRef(null)
-
   useEffect(() => {
     let cancelled = false
-    let timer
-    const sprite = new Image()
-    sprite.onload = () => {
+    let animation
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    Promise.all([loadCharacterFrames(image), loadGameIcon(eggImage, 'egg')]).then(([frames, egg]) => {
       if (cancelled) return
-      const size = 160
-      const frames = Array.from({ length: 4 }, (_, index) => {
-        const frame = document.createElement('canvas')
-        frame.width = size
-        frame.height = size
-        const context = frame.getContext('2d')
-        context.drawImage(sprite, index * sprite.width / 4, 0, sprite.width / 4, sprite.height / 3, 0, 0, size, size)
-        const pixels = context.getImageData(0, 0, size, size)
-        const visited = new Uint8Array(size * size)
-        const queue = []
-        // Remove only neutral backdrop pixels connected to the frame edges.
-        for (let i = 0; i < size; i += 1) {
-          queue.push(i, (size - 1) * size + i, i * size, i * size + size - 1)
-        }
-        while (queue.length) {
-          const pixel = queue.pop()
-          if (visited[pixel]) continue
-          visited[pixel] = 1
-          const offset = pixel * 4
-          const [red, green, blue] = pixels.data.subarray(offset, offset + 3)
-          if (Math.max(red, green, blue) - Math.min(red, green, blue) > 24 || red < 45 || red > 190) continue
-          pixels.data[offset + 3] = 0
-          const x = pixel % size
-          const y = Math.floor(pixel / size)
-          if (x > 0) queue.push(pixel - 1)
-          if (x < size - 1) queue.push(pixel + 1)
-          if (y > 0) queue.push(pixel - size)
-          if (y < size - 1) queue.push(pixel + size)
-        }
-        context.putImageData(pixels, 0, 0)
-        return frame
-      })
       const context = canvasRef.current.getContext('2d')
-      let index = 0
-      const draw = () => {
-        context.clearRect(0, 0, size, size)
-        context.drawImage(frames[index], 0, 0)
-        index = (index + 1) % frames.length
+      function draw() {
+        if (cancelled) return
+        const elapsed = actionStartedAt ? Date.now() - actionStartedAt : 0
+        const idleFrame = reducedMotion ? 0 : Math.floor(Date.now() / 300) % 4
+        const frameIndex = pose === 'throwing' ? 8 + Math.min(3, Math.max(0, Math.floor(elapsed / 250))) : pose === 'holding' ? 4 + idleFrame : idleFrame
+        context.clearRect(0, 0, 160, 160)
+        context.save()
+        if (facing === 'left') { context.translate(160, 0); context.scale(-1, 1) }
+        context.drawImage(frames[frameIndex], 0, 0)
+        if (pose === 'holding') context.drawImage(egg, 109, 38, 24, 28)
+        if (pose === 'throwing' && elapsed < 350) {
+          const isGuest = image.includes('guest_player')
+          context.drawImage(egg, isGuest && elapsed < 250 ? 32 : 109, elapsed < 250 ? (isGuest ? 35 : 77) : 30, 24, 28)
+        }
+        context.restore()
+        if (!reducedMotion || pose === 'throwing') animation = window.requestAnimationFrame(draw)
       }
       draw()
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        timer = window.setInterval(draw, 300)
-      }
-    }
-    sprite.src = image
-    return () => {
-      cancelled = true
-      window.clearInterval(timer)
-    }
-  }, [image])
-
-  return <canvas ref={canvasRef} width={160} height={160} className="board-character" role="img" aria-label={label} />
+    }).catch(() => {})
+    return () => { cancelled = true; window.cancelAnimationFrame(animation) }
+  }, [image, facing, grounded, pose, actionStartedAt])
+  return <canvas ref={canvasRef} width={160} height={grounded ? 120 : 160} className={`board-character board-character-${pose}`} data-facing={facing} data-grounded={grounded} role="img" aria-label={label} />
 }

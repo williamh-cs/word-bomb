@@ -12,7 +12,7 @@ export default function HomePage() {
       <section className="home-hero" aria-labelledby="home-heading">
         <div className="home-hero-copy">
           <p className="eyebrow">Think fast</p>
-          <h1 id="home-heading">WORD BOMB</h1>
+          <h1 id="home-heading">DRAGON'S EGG</h1>
           <div className="home-hero-actions">
             <Link className="button button-play" to="/multiplayer" state={{ playAsGuest: !user }}>
               {user ? 'Play' : 'Play as Guest'}
@@ -61,10 +61,12 @@ export default function HomePage() {
           <h2 id="how-to-play-heading">How to play</h2>
           <ol>
             <li>The game generates a starting word.</li>
-            <li>Form a new word that starts with the last letters of the previous word.</li>
-            <li>Submit your word before the time limit runs out.</li>
-            <li>You only have 3 lives, so make every turn count!</li>
-            <li>Keep the chain going: each new word becomes the starting point for the next turn!</li>
+            <li>On your turn, form a new English word containing the last two letters of the current word anywhere, together and in the same order. For example, forest → faster uses ST.</li>
+            <li>No word can be repeated during the game, including the starting word.</li>
+            <li>Keep it respectful. Slurs are not allowed.</li>
+            <li>You have 15 seconds to submit a valid word. If time runs out, you lose a life.</li>
+            <li>Each player has 3 lives. Lose all 3 and you are out of the game.</li>
+            <li>Each submitted word becomes the new word for the next player's turn.</li>
           </ol>
         </dialog>
       </section>

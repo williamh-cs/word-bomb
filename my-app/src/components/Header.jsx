@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import EggLogo from './EggLogo'
 
 export default function Header() {
   const { user, setUser } = useAuth()
@@ -33,8 +34,9 @@ export default function Header() {
 
   return (
     <header className="top-bar">
-      <Link className="top-bar-brand" to="/" aria-label="Word Bomb home">
-        <span>WORD BOMB</span>
+      <Link className="top-bar-brand" to="/" aria-label="Dragon's Egg home">
+        <EggLogo />
+        <span>DRAGON'S EGG</span>
       </Link>
       {user && (
         <nav className="top-bar-auth" aria-label="Account">
