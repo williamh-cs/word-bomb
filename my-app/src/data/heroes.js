@@ -1,7 +1,7 @@
-import maleKnight from '../assets/male_knight.png'
-import femaleKnight from '../assets/female_knight.png'
-import maleMage from '../assets/male_mage.png'
-import femaleMage from '../assets/female_mage.png'
+import maleKnight from '../assets/characters/male_knight.png'
+import femaleKnight from '../assets/characters/female_knight.png'
+import maleMage from '../assets/characters/male_mage.png'
+import femaleMage from '../assets/characters/female_mage.png'
 
 export const heroes = [
   { id: 'male-knight', name: 'Knight', title: 'Wylder', image: maleKnight },

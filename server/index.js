@@ -5,7 +5,7 @@ import cors from 'cors'
 import session from 'express-session'
 import { Server } from 'socket.io'
 import authRoutes from './routes/authRoutes.js'
-import { registerRoomSocketHandlers } from './roomSocketHandlers.js'
+import { registerRoomSocketHandlers } from './rooms/socketHandlers.js'
 
 const app = express()
 const httpServer = http.createServer(app)

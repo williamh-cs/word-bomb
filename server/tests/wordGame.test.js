@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseStartingWord, getWordValidationError, isValidNextWord } from '../wordGame.js'
-import { isDisallowedWord } from '../wordSafety.js'
+import { chooseStartingWord, getWordValidationError, isValidNextWord } from '../game/wordGame.js'
+import { isDisallowedWord } from '../game/wordSafety.js'
 
 test('negate and negation are accepted for matching pairs and explain mismatches', () => {
   for (const word of ['negate', 'negation']) {

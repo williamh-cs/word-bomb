@@ -1,0 +1,117 @@
+.hero-select-content { text-align: center; }
+
+.hero-select-content .guest-welcome h1 {
+  font-size: clamp(28px, 5vw, 48px);
+}
+
+.hero-select-description {
+  margin: 16px 0 0;
+  font-size: 15px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  width: min(100%, 1000px);
+  margin: 0 auto;
+}
+
+.hero-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 20px 12px;
+  border: 3px solid #43533b;
+  border-radius: 2px;
+  color: var(--text-h);
+  background: #fff8e8;
+  box-shadow: 0 0 0 3px #d0b77a, 5px 7px 0 #43533b26;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.hero-class {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hero-portrait {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid #829071;
+  background: #4b4f52;
+}
+
+.hero-sprite {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-size: 400% 300%;
+  background-position: left top;
+  image-rendering: pixelated;
+}
+
+.hero-name { font-size: 14px; font-weight: 800; }
+
+.hero-card-status { font-size: 11px; color: #356c52; }
+
+.hero-card:hover,
+.hero-card:focus-visible,
+.hero-card-selected {
+  border-color: #356c52;
+  background: #e7f5dd;
+  box-shadow: 0 0 0 3px #9fc976, 0 0 24px #68b96f55, 5px 7px 0 #43533b26;
+}
+
+.hero-card:focus-visible {
+  outline: 3px solid #356c52;
+  outline-offset: 6px;
+}
+
+.hero-card:hover .hero-sprite,
+.hero-card:focus-visible .hero-sprite {
+  animation: hero-idle 1400ms ease-in-out infinite;
+}
+
+@keyframes hero-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.hero-selection-status {
+  margin: 30px 0 18px;
+  font: 700 13px/1.6 var(--mono);
+}
+
+.hero-confirm {
+  margin: 0 0 24px;
+}
+
+.hero-confirm .button {
+  min-width: 180px;
+}
+
+@media (max-width: 800px) {
+  .hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
+}
+
+@media (max-width: 380px) {
+  .hero-grid { grid-template-columns: 1fr; max-width: 260px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-card:hover .hero-sprite,
+    .hero-card:focus-visible .hero-sprite { animation: none; }
+
+  .hero-card { transition: none; }
+}

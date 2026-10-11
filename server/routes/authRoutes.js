@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import argon2 from 'argon2'
-import db from '../db.js'
+import db from '../db/index.js'
 
 const router = Router()
 

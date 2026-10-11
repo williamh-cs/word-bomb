@@ -67,7 +67,6 @@ export function loadCharacterFrames(url) {
       const column = index % 4
       context.drawImage(image, column * image.width / 4, row * image.height / 3, image.width / 4, image.height / 3, 0, 0, 160, 160)
       removeBackdrop(context, 160, 160)
-      // Replace the original item in holding and throwing frames at render time.
       if (row === 1) {
         if (isGuest) context.clearRect(115, 34, 24, 24)
         else removeMagicItem(context, 100, 20, 59, 52)

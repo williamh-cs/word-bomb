@@ -4,10 +4,10 @@ import { createRequire } from 'node:module'
 import { once } from 'node:events'
 import { test } from 'node:test'
 import { Server } from 'socket.io'
-import { registerRoomSocketHandlers } from '../roomSocketHandlers.js'
-import { expireTurn } from '../rooms.js'
-import { getCountdownLabel } from '../../my-app/src/data/gameCountdown.js'
-import { getEggFlightPoint } from '../../my-app/src/data/eggFlight.js'
+import { registerRoomSocketHandlers } from '../rooms/socketHandlers.js'
+import { expireTurn } from '../rooms/rooms.js'
+import { getCountdownLabel } from '../../my-app/src/lib/gameCountdown.js'
+import { getEggFlightPoint } from '../../my-app/src/lib/eggFlight.js'
 import wordList from 'an-array-of-english-words' with { type: 'json' }
 
 const requireClient = createRequire(new URL('../../my-app/package.json', import.meta.url))
